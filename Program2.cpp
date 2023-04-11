@@ -16,21 +16,45 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <iostream>
+#include <vector>
 
 using namespace cv;
 using namespace std;
 
+void applyChromaKey(const Mat& foreground, const Mat& background, Mat& output, int threshold);
+
+void onTrackbar(int threshold, void* data) {
+    auto context = static_cast<tuple<Mat, Mat, Mat>*>(data);
+    applyChromaKey(get<0>(*context), get<1>(*context), get<2>(*context), threshold);
+    imshow("Overlay Image", get<2>(*context));
+}
+
 int main(int argc, char* argv[]) {
-    // Step 1: Read two images
     Mat foreground = imread("foreground.jpg");
     Mat background = imread("background.jpg");
+    Mat output;
 
     if (foreground.empty() || background.empty()) {
         cerr << "Error: Unable to read input images." << endl;
         return -1;
     }
 
-    // Step 2: Create a color histogram
+    int threshold = 32;
+
+    namedWindow("Overlay Image", WINDOW_AUTOSIZE);
+    tuple<Mat, Mat, Mat> context(foreground, background, output);
+    createTrackbar("Threshold", "Overlay Image", &threshold, 255, onTrackbar, &context);
+
+    applyChromaKey(foreground, background, output, threshold);
+    imshow("Overlay Image", output);
+
+    waitKey(0);
+    imwrite("overlay.jpg", output);
+    return 0;
+}
+
+void applyChromaKey(const Mat& foreground, const Mat& background, Mat& output, int threshold) {
+    // Create a color histogram
     const int buckets = 4;
     int dims[] = {buckets, buckets, buckets};
     Mat hist(3, dims, CV_32S, Scalar::all(0));
@@ -48,7 +72,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // Step 3: Find the most common color
+    // Find the most common color
     int maxVotes = 0;
     int maxIndex[3] = {0, 0, 0};
 
@@ -69,10 +93,10 @@ int main(int argc, char* argv[]) {
     int cRed = maxIndex[0] * bucketSize + bucketSize / 2;
     int cGreen = maxIndex[1] * bucketSize + bucketSize / 2;
     int cBlue = maxIndex[2] * bucketSize + bucketSize / 2;
-    Vec3b mostCommonColor(cBlue, cGreen, cRed); // determine the chroma key
+    Vec3b mostCommonColor(cBlue, cGreen, cRed);
 
-    // Step 4: Replace pixels close to the most common color
-    int threshold = bucketSize / 2;
+    // Replace pixels close to the most common color
+    output = foreground.clone();
 
     for (int r = 0; r < foreground.rows; ++r) {
         for (int c = 0; c < foreground.cols; ++c) {
@@ -80,16 +104,9 @@ int main(int argc, char* argv[]) {
             Vec3b bgPixel = background.at<Vec3b>(r % background.rows, c % background.cols);
 
             if (norm(fgPixel - mostCommonColor) <= threshold) {
-                foreground.at<Vec3b>(r, c) = bgPixel;
+                output.at<Vec3b>(r, c) = bgPixel;
             }
         }
     }
-
-    // Step 5: Display and save the resulting image
-    imshow("Overlay Image", foreground);
-    imwrite("overlay.jpg", foreground);
-    waitKey(0);
-
-    return 0;
 }
 
