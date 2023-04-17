@@ -30,12 +30,9 @@ void applyChromaKey(const Mat& foreground, const Mat& background, Mat& output, i
  * @param threshold The current threshold value for the chroma key effect.
  * @param data A void pointer to the data, which includes the foreground, background, and output images.
  * 
- * * @param[in] argc The number of arguments passed to the program
- * @param[in] argv Array of arguments passed to the program
- * 
  * Preconditions:
  * - The data pointer must point to a valid tuple containing the Mat objects for foreground, background, and output images.
- * - The foreground, background, and output images should have the same dimensions.
+ * - The foreground, background, and output images should have the same dimensions, but not necessarily
  * - The threshold value should be in the range [0, 255].
  * 
  * Postconditions:
@@ -53,9 +50,12 @@ void onTrackbar(int threshold, void* data) {
  * 
  * Reads foreground and background images, applies the chroma key effect with an adjustable threshold value, and displays the result.
  * 
+ * @param[in] argc The number of arguments passed to the program
+ * @param[in] argv Array of arguments passed to the program
+ * 
  * Preconditions:
  * - Foreground and background images should be in JPG format and placed in the same directory as the executable.
- * - Foreground and background images should have the same dimensions.
+ * - Foreground and background images should have the same dimensions, but not necessarily
  * 
  * Postconditions:
  * - The program will display the foreground image with the chroma key effect applied.
@@ -64,6 +64,7 @@ void onTrackbar(int threshold, void* data) {
  * - The program will return 0 if it completes successfully, or -1 if there's an error reading the input images.
  */
 int main(int argc, char* argv[]) {
+    // read images
     Mat foreground = imread("foreground.jpg");
     Mat background = imread("background.jpg");
     Mat output;
