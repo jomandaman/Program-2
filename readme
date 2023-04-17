@@ -1,0 +1,29 @@
+Program 2 
+Due Monday by 8pm Points 100 Submitting a file upload File Types zip
+In this assignment, you will be working directly with the image pixels to modify an image similar to a “green screen” technique. Pixels of a color detected in the image will be replaced with pixels from a second image. For further information on the general idea, see: http://en.wikipedia.org/wiki/Chroma_keyLinks to an external site.
+
+1. Read two images from the disk. (Use the default directory, which is the same directory that the source code is in.) The images should be called “foreground.jpg” and “background.jpg”. You will provide your own images for this assignment.
+
+2. Use a color histogramLinks to an external site. to find the most common color in the foreground image. The histogram should be a three-dimensional matrix of integers. (Note: don’t use the OpenCV methods for creating histograms in this assignment.) The following code snippets will be useful:
+
+  const int buckets = // put the number of buckets in each dimension here
+  int dims[] = {buckets, buckets, buckets};
+  Mat hist(3, dims, CV_32S, Scalar::all(0)); // 3D histogram initialized to zero
+To create the histogram, loop through the foreground image and assign each pixel to a histogram bucket. That bucket should be incremented by one. To decide which bucket to increment, you divide the color value by (256/buckets):
+
+  int bucketSize = 256/buckets;                              
+  int x = red / bucketSize;
+  int y = green / bucketSize;
+  int z= blue / bucketSize;
+I have found that buckets = 4 works relatively well, but this may vary with different images. (Note that the above equations only work when the number of buckets is a multiple of 2.)
+
+3. Find the histogram bin with the most “votes” by looping over all three dimensions. If the bin with the most votes is [x, y, z], then the most common color is approximately:
+
+  int cRed = x * bucketSize + bucketSize/2;
+  int cGreen = y * bucketSize + bucketSize/2;
+  int cBlue = z * bucketSize + bucketSize/2;
+4. Replace every pixel in the foreground image that is close to the most common color (say within bucketSize or bucketSize/2 in all three bands, maybe use a trackbar!) with the corresponding pixel from the background image (same row and column, unless the background image is too small). If the background image is too small, start over from the start of the background image. (This can be accomplished by taking the foreground row modulo the number of rows in the background image and similarly for columns.)
+
+5. Display the resulting image on the screen and save it to "overlay.jpg".
+
+6. Find two images that generate an interesting result. Here is my result:
